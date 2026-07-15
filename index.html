@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="SWYM Storefront — a curated fashion wishlist experience. Browse, save, and merge your wishlists." />
+  <title>SWYM — Shop & Wishlist</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+</head>
+
+<body>
+
+  <!-- ── Navbar ───────────────────────────────────────────── -->
+  <nav class="navbar" role="navigation" aria-label="Main navigation">
+
+    <a href="#shop" class="navbar-logo" id="nav-logo">
+      <span>✦</span> SWYM
+    </a>
+
+    <a href="#shop" class="nav-link" id="nav-shop-link">
+      🛍 Shop
+    </a>
+
+    <!--
+      ⚠️ MISTAKE #2:
+      href points to "#wishlist" (singular) instead of "#wishlists" (plural).
+      The router in app.js handles "#wishlists" — this link routes to nowhere,
+      so clicking "My Wishlists" in the nav renders a blank page / falls through
+      to the default shop view. Users can't reach the wishlists page from nav.
+    -->
+    <a href="#wishlists" class="nav-link" id="nav-wishlists-link">
+      🤍 My Wishlists <span class="nav-badge hidden" id="nav-badge">0</span>
+    </a>
+
+    <button class="nav-dark-toggle" id="dark-toggle" title="Toggle dark mode" aria-label="Toggle dark mode">
+      🌙
+    </button>
+
+  </nav>
+
+  <!-- ── App Shell ─────────────────────────────────────────── -->
+  <main id="app" role="main">
+
+    <!-- ── View: Shop ───────────────────────────────────────── -->
+    <section id="view-shop" class="view" aria-label="Shop">
+
+      <div class="shop-controls">
+        <div class="search-wrap">
+          <span class="search-icon" aria-hidden="true">🔍</span>
+          <input
+            type="search"
+            id="search-input"
+            class="search-input"
+            placeholder="Search products, brands, tags…"
+            autocomplete="off"
+            aria-label="Search products"
+          />
+        </div>
+
+        <select id="sort-select" class="sort-select" aria-label="Sort products">
+          <option value="featured">✨ Featured</option>
+          <option value="price-asc">Price: Low → High</option>
+          <option value="price-desc">Price: High → Low</option>
+          <option value="rating">⭐ Top Rated</option>
+        </select>
+      </div>
+
+      <div class="filter-pills" id="filter-pills" role="group" aria-label="Filter by category">
+        <button class="pill active" data-category="All" id="pill-all">All</button>
+        <button class="pill" data-category="Tops"        id="pill-tops">Tops</button>
+        <button class="pill" data-category="Bottoms"     id="pill-bottoms">Bottoms</button>
+        <button class="pill" data-category="Shoes"       id="pill-shoes">Shoes</button>
+        <button class="pill" data-category="Accessories" id="pill-accessories">Accessories</button>
+      </div>
+
+      <div class="product-grid" id="product-grid" aria-label="Product listing">
+        <!-- Product cards injected by app.js renderShop() -->
+      </div>
+
+    </section>
+
+    <!-- ── View: Wishlists (list overview) ──────────────────── -->
+    <section id="view-wishlists" class="view" aria-label="My Wishlists">
+
+      <div class="section-header">
+        <h1 class="section-title">My Wishlists</h1>
+        <button class="btn btn-ghost" id="btn-new-list">＋ New List</button>
+        <button class="btn btn-primary" id="btn-merge-lists">⇌ Merge Lists</button>
+      </div>
+
+      <div class="wishlists-grid" id="wishlists-grid">
+        <!-- Wishlist cards injected by app.js renderWishlists() -->
+      </div>
+
+    </section>
+
+    <!-- ── View: Wishlist Detail ─────────────────────────────── -->
+    <section id="view-wishlist-detail" class="view" aria-label="Wishlist detail">
+
+      <div class="detail-header">
+        <a href="#wishlists" class="back-link" id="back-to-lists">← All Lists</a>
+        <input
+          type="text"
+          class="detail-title-input"
+          id="detail-title-input"
+          placeholder="List name…"
+          maxlength="60"
+          aria-label="Wishlist name"
+        />
+        <span class="text-muted" id="detail-item-count" style="font-size:13px; white-space:nowrap"></span>
+      </div>
+
+      <div class="items-list" id="items-list" aria-label="Wishlist items">
+        <!-- Item rows injected by app.js renderWishlistDetail() -->
+      </div>
+
+    </section>
+
+  </main>
+
+  <!-- ── Merge Modal ───────────────────────────────────────── -->
+  <!--
+    Rendered outside <main> so it sits at body level.
+    Shown/hidden via .hidden class by app.js.
+    position:fixed on .modal-overlay (in CSS) ensures full-viewport coverage.
+  -->
+  <div class="modal-overlay hidden" id="merge-modal-overlay" role="dialog"
+       aria-modal="true" aria-labelledby="merge-modal-title">
+    <div class="modal" id="merge-modal">
+
+      <div class="modal-header">
+        <h2 class="modal-title" id="merge-modal-title">⇌ Merge Wishlists</h2>
+        <button class="modal-close" id="merge-modal-close" aria-label="Close merge modal">×</button>
+      </div>
+
+      <div class="modal-body">
+
+        <!-- Step 1: Select two lists -->
+        <div class="form-group">
+          <label class="form-label" for="merge-select-a">List A</label>
+          <select class="merge-select" id="merge-select-a" aria-label="Select List A">
+            <option value="">— choose a list —</option>
+          </select>
+        </div>
+
+        <div class="merge-select-row" style="justify-items:center; margin-bottom:16px">
+          <div></div>
+          <div class="merge-icon" aria-hidden="true">⇌</div>
+          <div></div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="merge-select-b">List B</label>
+          <select class="merge-select" id="merge-select-b" aria-label="Select List B">
+            <option value="">— choose a list —</option>
+          </select>
+        </div>
+
+        <!-- Step 2: Preview (shown once both lists selected) -->
+        <div class="merge-preview hidden" id="merge-preview">
+
+          <div class="merge-stats" id="merge-stats">
+            <div class="merge-stat">
+              <div class="merge-stat-value" id="stat-total">0</div>
+              <div class="merge-stat-label">Total Items</div>
+            </div>
+            <div class="merge-stat">
+              <div class="merge-stat-value" id="stat-dupes">0</div>
+              <div class="merge-stat-label">Duplicates Resolved</div>
+            </div>
+            <div class="merge-stat">
+              <div class="merge-stat-value" id="stat-new">0</div>
+              <div class="merge-stat-label">New to List A</div>
+            </div>
+          </div>
+
+          <div class="merge-groups">
+            <div>
+              <div class="merge-group-label" id="group-a-label">Only in A</div>
+              <div class="merge-thumbs" id="group-only-a"></div>
+            </div>
+            <div>
+              <div class="merge-group-label">In Both</div>
+              <div class="merge-thumbs" id="group-in-both"></div>
+            </div>
+            <div>
+              <div class="merge-group-label" id="group-b-label">Only in B</div>
+              <div class="merge-thumbs" id="group-only-b"></div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Step 3: Merge mode (shown once both lists selected) -->
+        <div class="hidden" id="merge-mode-section">
+
+          <div class="form-label" style="margin-bottom:10px">Merge Into</div>
+
+          <div class="merge-mode-options">
+            <label class="merge-mode-option selected" id="mode-into-a-label">
+              <input type="radio" name="merge-mode" value="into_a" id="mode-into-a" checked />
+              <div>
+                <div class="merge-mode-label" id="mode-a-text">Merge into List A</div>
+                <div class="merge-mode-desc">List B's unique items are added to List A. Both originals kept.</div>
+              </div>
+            </label>
+
+            <label class="merge-mode-option" id="mode-new-label">
+              <input type="radio" name="merge-mode" value="new_list" id="mode-new-list" />
+              <div>
+                <div class="merge-mode-label">Create a new list</div>
+                <div class="merge-mode-desc">Combined items go into a brand-new list. Both originals kept.</div>
+              </div>
+            </label>
+          </div>
+
+          <div class="new-list-name-wrap" id="new-list-name-wrap">
+            <label class="form-label" for="new-list-name-input">New list name</label>
+            <input
+              type="text"
+              class="new-list-name-input"
+              id="new-list-name-input"
+              placeholder="e.g. Summer + Birthday"
+              maxlength="60"
+            />
+          </div>
+
+        </div>
+
+      </div><!-- /modal-body -->
+
+      <div class="modal-footer">
+        <button class="btn btn-ghost" id="merge-cancel">Cancel</button>
+        <button class="btn btn-primary hidden" id="merge-confirm" disabled>
+          ✓ Confirm Merge
+        </button>
+      </div>
+
+    </div><!-- /modal -->
+  </div><!-- /modal-overlay -->
+
+  <!-- ── New List Modal ───────────────────────────────────── -->
+  <div class="modal-overlay hidden" id="new-list-modal-overlay" role="dialog"
+       aria-modal="true" aria-labelledby="new-list-modal-title">
+    <div class="modal" id="new-list-modal" style="max-width:400px">
+      <div class="modal-header">
+        <h2 class="modal-title" id="new-list-modal-title">＋ New Wishlist</h2>
+        <button class="modal-close" id="new-list-modal-close" aria-label="Close">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label" for="new-list-name">List Name</label>
+          <input
+            type="text"
+            class="form-input"
+            id="new-list-name"
+            placeholder='e.g. "Birthday Ideas", "Summer 2025"'
+            maxlength="60"
+            autocomplete="off"
+          />
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" id="new-list-cancel">Cancel</button>
+        <button class="btn btn-primary" id="new-list-confirm">Create List</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast notifications rendered here by showToast() in app.js -->
+  <div class="toast-container" id="toast-container"></div>
+
+  <!-- ── Scripts (load order matters) ─────────────────────── -->
+  <!--
+    ⚠️ MISTAKE #1:
+    app.js is loaded BEFORE store.js.
+    app.js immediately calls window.Store.* on DOMContentLoaded.
+    Since store.js hasn't executed yet, window.Store is undefined →
+    "Cannot read properties of undefined (reading 'getWishlists')"
+    The entire app breaks on first load — blank screen with console error.
+    Fix: swap the order so store.js loads before app.js.
+  -->
+  <script src="js/data.js"></script>   <!-- 1. catalog data -->
+  <script src="js/store.js"></script>  <!-- 2. storage layer (needs PRODUCTS) -->
+  <script src="js/app.js"></script>    <!-- 3. router + UI (needs Store + PRODUCTS) -->
+
+</body>
+</html>
